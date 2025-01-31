@@ -1,0 +1,34 @@
+import React, { useState, useEffect } from 'react';
+
+const CustomerList = () => {
+  const [customers, setCustomers] = useState([]);
+  const ws = new WebSocket('ws://localhost:3000');
+
+  useEffect(() => {
+    fetch('/customers')
+      .then(res => res.json())
+      .then(data => setCustomers(data));
+
+    ws.onmessage = (message) => {
+      const customer = JSON.parse(message.data);
+      setCustomers(prevCustomers => [...prevCustomers, customer]);
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [ws]);
+
+  return (
+    <div>
+      <h1>Customer List</h1>
+      <ul>
+        {customers.map((customer, index) => (
+          <li key={index}>{customer.name}</li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default CustomerList;
