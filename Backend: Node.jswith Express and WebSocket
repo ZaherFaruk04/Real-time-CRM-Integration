@@ -1,0 +1,41 @@
+const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
+const bodyParser = require('body-parser');
+
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+let clients = [];
+
+wss.on('connection', (ws) => {
+  clients.push(ws);
+
+  ws.on('close', () => {
+    clients = clients.filter(client => client !== ws);
+  });
+});
+
+app.use(bodyParser.json());
+
+let customers = [];
+
+app.post('/customer', (req, res) => {
+  const customer = req.body;
+  customers.push(customer);
+
+  clients.forEach(client => {
+    client.send(JSON.stringify(customer));
+  });
+
+  res.status(201).send(customer);
+});
+
+app.get('/customers', (req, res) => {
+  res.status(200).send(customers);
+});
+
+server.listen(3000, () => {
+  console.log('Server is listening on port 3000');
+});
